@@ -439,6 +439,14 @@
         color: var(--muted);
         font-size: 1rem;
       }
+      .svc h4 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin: 1.1rem 0 0;
+      }
+      .svc h4 + ul {
+        margin-top: 0.5rem;
+      }
       .svc ul {
         list-style: none;
         padding: 0;
@@ -848,28 +856,37 @@
             <article class="svc">
               <h3>تأسيس الشركات</h3>
               <p>اختر نوع شركتك، وجهّز بياناتك ومستنداتك في مكان واحد.</p>
+              <h4>شركات الأشخاص</h4>
               <ul>
-                <li>شركة ذات مسؤولية محدودة</li>
-                <li>شركة الشخص الواحد</li>
-                <li>شركة مساهمة</li>
+                <li>شركات التضامن</li>
+                <li>شركات التوصية البسيطة</li>
+                <li>شركات المحاصة</li>
+              </ul>
+              <h4>شركات الأموال</h4>
+              <ul>
+                <li>شركات الشخص الواحد</li>
+                <li>شركات ذات مسؤولية محدودة</li>
+                <li>شركات مساهمة</li>
+                <li>شركات التوصية بالأسهم</li>
               </ul>
             </article>
             <article class="svc">
               <h3>صياغة العقود التجارية</h3>
               <p>أجب عن أسئلة بسيطة، ويجهّز لك الموقع مسودة عقدك.</p>
               <ul>
-                <li>عقد شراكة</li>
-                <li>عقد توريد</li>
-                <li>عقد وكالة تجارية</li>
+                <li>عقود بيع وتداول السلع والخدمات</li>
+                <li>العقود العقارية والإنشائية</li>
+                <li>العقود التأسيسية والشركات</li>
+                <li>عقود التصنيع والملكية الفكرية</li>
+                <li>عقود التمويل والتشغيل</li>
               </ul>
             </article>
             <article class="svc">
-              <h3>تسجيل العلامات التجارية</h3>
-              <p>احمِ اسم مشروعك وشعارك قبل أن يسبقك إليه غيرك.</p>
+              <h3>الملكية الفكرية (IP)</h3>
+              <p>احمِ اسم مشروعك وشعارك وابتكاراتك قبل أن يسبقك إليها غيرك.</p>
               <ul>
-                <li>فحص توفر الاسم</li>
-                <li>تجهيز بيانات الطلب</li>
-                <li>متابعة خطوات التسجيل</li>
+                <li>تسجيل العلامات التجارية</li>
+                <li>تسجيل براءات الاختراع</li>
               </ul>
             </article>
           </div>
@@ -1016,10 +1033,8 @@
                   >
                   <div class="err" id="e-consent" aria-live="polite"></div>
                 </div>
+                <div class="err" id="e-send" aria-live="polite"></div>
                 <button class="btn" type="submit">سجّل اهتمامي</button>
-                <p class="demo-note">
-                  هذه نسخة تجريبية للصفحة، ولا تُرسل البيانات إلى أي جهة.
-                </p>
               </form>
             </div>
           </div>
@@ -1118,6 +1133,14 @@
       </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/dist/email.min.js"></script>
+    <script>
+      // EmailJS config — from https://dashboard.emailjs.com
+      var EMAILJS_PUBLIC_KEY = "YOUR_PUBLIC_KEY"; // Account > General
+      var EMAILJS_SERVICE_ID = "YOUR_SERVICE_ID"; // Email Services
+      var EMAILJS_TEMPLATE_ID = "YOUR_TEMPLATE_ID"; // Email Templates
+      emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+    </script>
     <script>
       (function () {
         var reduce =
@@ -1195,10 +1218,41 @@
             return;
           }
 
-          slot.innerHTML =
-            '<div class="done" role="status"><h3>تم تسجيل اهتمامك</h3><p>شكرًا لك يا ' +
-            name.replace(/[<>&"]/g, "") +
-            ". في النسخة الفعلية ستصل بياناتك إلى فريقنا ونتواصل معك عند فتح الخدمة. هذه نسخة تجريبية ولم تُرسل أي بيانات.</p></div>";
+          var btn = form.querySelector('button[type="submit"]');
+          var btnText = btn.textContent;
+          btn.disabled = true;
+          btn.textContent = "جارٍ الإرسال...";
+          setErr("send", "");
+
+          emailjs
+            .send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+              name: name,
+              phone: phone,
+              email: email,
+              service: f.service.value,
+              role: role.value,
+              need: f.need.value.trim() || "—",
+              submitted_at: new Date().toLocaleString("ar-EG", {
+                timeZone: "Africa/Cairo",
+              }),
+            })
+            .then(
+              function () {
+                slot.innerHTML =
+                  '<div class="done" role="status"><h3>تم تسجيل اهتمامك</h3><p>شكرًا لك يا ' +
+                  name.replace(/[<>&"]/g, "") +
+                  ". وصلت بياناتك إلى فريقنا، وسنتواصل معك عند فتح الخدمة.</p></div>";
+              },
+              function (err) {
+                console.error("EmailJS error:", err);
+                btn.disabled = false;
+                btn.textContent = btnText;
+                setErr(
+                  "send",
+                  "تعذّر إرسال البيانات، حاول مرة أخرى أو تواصل معنا عبر فيسبوك.",
+                );
+              },
+            );
         });
       })();
     </script>
