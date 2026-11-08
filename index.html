@@ -1033,6 +1033,13 @@
                   >
                   <div class="err" id="e-consent" aria-live="polite"></div>
                 </div>
+                <div class="field">
+                  <div
+                    class="g-recaptcha"
+                    data-sitekey="6LdmBRcuAAAAADXzLe495cgoCrQAmVYBizsgFjH3"
+                  ></div>
+                  <div class="err" id="e-captcha" aria-live="polite"></div>
+                </div>
                 <div class="err" id="e-send" aria-live="polite"></div>
                 <button class="btn" type="submit">سجّل اهتمامي</button>
               </form>
@@ -1133,12 +1140,17 @@
       </div>
     </div>
 
+    <script
+      src="https://www.google.com/recaptcha/api.js?hl=ar"
+      async
+      defer
+    ></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/dist/email.min.js"></script>
     <script>
       // EmailJS config — from https://dashboard.emailjs.com
-      var EMAILJS_PUBLIC_KEY = "YOUR_PUBLIC_KEY"; // Account > General
-      var EMAILJS_SERVICE_ID = "YOUR_SERVICE_ID"; // Email Services
-      var EMAILJS_TEMPLATE_ID = "YOUR_TEMPLATE_ID"; // Email Templates
+      var EMAILJS_PUBLIC_KEY = "hm-oyW42KtIl1DX8T"; // Account > General
+      var EMAILJS_SERVICE_ID = "service_j1ynx4v"; // Email Services
+      var EMAILJS_TEMPLATE_ID = "template_kivlu8v"; // Email Templates
       emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
     </script>
     <script>
@@ -1213,6 +1225,16 @@
             ? setErr("consent", "", f.consent)
             : bad("consent", "نحتاج موافقتك للمتابعة.", f.consent);
 
+          var captcha =
+            window.grecaptcha && grecaptcha.getResponse
+              ? grecaptcha.getResponse()
+              : "";
+          if (ok && !captcha) {
+            setErr("captcha", "أكّد أنك لست روبوتًا.");
+            return;
+          }
+          setErr("captcha", "");
+
           if (!ok) {
             if (first && first.focus) first.focus();
             return;
@@ -1232,6 +1254,7 @@
               service: f.service.value,
               role: role.value,
               need: f.need.value.trim() || "—",
+              "g-recaptcha-response": captcha,
               submitted_at: new Date().toLocaleString("ar-EG", {
                 timeZone: "Africa/Cairo",
               }),
@@ -1247,6 +1270,7 @@
                 console.error("EmailJS error:", err);
                 btn.disabled = false;
                 btn.textContent = btnText;
+                if (window.grecaptcha) grecaptcha.reset();
                 setErr(
                   "send",
                   "تعذّر إرسال البيانات، حاول مرة أخرى أو تواصل معنا عبر فيسبوك.",
